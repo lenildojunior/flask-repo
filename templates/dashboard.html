@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block nav %}
+<li><a href="{{ url_for('graphs') }}">Gráficos</a></li>
+{% endblock %}
+
+{% block header %}
+  <h1>{% block title %}Lista de Frutas{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+        <div>
+            <ul>
+                {% for fruta in fruits %}
+                    <li>{{fruta.id}}:{{fruta.nome}}</li>
+                {% endfor %}
+            </ul>
+        </div>
+{% endblock %}
