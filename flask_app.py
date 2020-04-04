@@ -15,9 +15,9 @@ app.add_url_rule('/', endpoint='index') #Comando para instanciar a pagina '/' co
 
 SQLALCHEMY_DATABASE_URI = "mysql+mysqlconnector://{username}:{password}@{hostname}/{databasename}".format(
     username = "lenildojunior",
-    password="mysqlAdmin",
+    password="senha ddo mysql",
     hostname="lenildojunior.mysql.pythonanywhere-services.com",
-    databasename="lenildojunior$frutas",
+    databasename="nome do banco",
 )
 
 #Set the app config values for Database connection
