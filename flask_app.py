@@ -1,4 +1,5 @@
 import functools
+import folium
 from flask import Flask, render_template , redirect, request,url_for,flash,g,session
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
@@ -14,9 +15,9 @@ app.add_url_rule('/', endpoint='index') #Comando para instanciar a pagina '/' co
 
 SQLALCHEMY_DATABASE_URI = "mysql+mysqlconnector://{username}:{password}@{hostname}/{databasename}".format(
     username = "lenildojunior",
-    password="sua senha",
-    hostname="host do banco",
-    databasename="nome do banco",
+    password="mysqlAdmin",
+    hostname="lenildojunior.mysql.pythonanywhere-services.com",
+    databasename="lenildojunior$frutas",
 )
 
 #Set the app config values for Database connection
@@ -131,4 +132,13 @@ def graphs():
     graph_url = build_graph(eixo_x_list,eixo_y_list)
     return render_template('graphs.html',graph1 = graph_url,graph2 = graph_url,graph3 = graph_url)
 
+@app.route('/mapa')
+@login_required
+def mapa():
+    start_coords = (-5.834575, -35.2207787) #Coordenadas de Natal
+    folium_map = folium.Map(location=start_coords, zoom_start=14)
+    site = url_for('graphs')
+    html = "<a href= '" + site + "' target='_blank'>Ver gráficos</h1></a>"
+    folium.Marker(location = (-5.8112895,-35.2084236),popup=folium.Popup(html), icon=folium.Icon(color='green')).add_to(folium_map)#Adicionando uma marcação no mapa
+    return folium_map._repr_html_()
 
