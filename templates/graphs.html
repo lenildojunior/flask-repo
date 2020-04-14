@@ -2,11 +2,12 @@
 
 {% block nav %}
 <li><a href="{{ url_for('index') }}">Lista</a></li>
-<li><a href="{{ url_for('mapa') }}">Mapa</a></li>
+<li><a href="{{ url_for('mapa') }}">Graficos</a></li>
+<li><a href="{{ url_for('cadastro_de_dispositivos') }}">Cadastrar dispositivos</a></li>
 {% endblock %}
 
 {% block header %}
-  <h1>{% block title %}Graficos{% endblock %}</h1>
+  <h1>{% block title %}Mapa{% endblock %}</h1>
 {% endblock %}
 {% block content %}
         <div>Graph1</div>
