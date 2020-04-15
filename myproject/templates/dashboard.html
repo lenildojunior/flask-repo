@@ -1,0 +1,29 @@
+{% extends 'base.html' %} 
+
+{% block nav %}
+ <li><a href="{{ url_for('graphs') }}">Gráficos</a></li> 
+<li><a href="{{ url_for('mapa') }}">Ver mapa</a></li> 
+<li><a href="{{ url_for('cadastro_de_dispositivos') }}">Cadastrar dispositivos</a></li>
+{% endblock %} 
+
+{% block header %}
+  <h1>{% block title %}Lista de Dispositivos{% endblock %}</h1>
+ {% endblock %} 
+
+{% block content %}
+ 	<table>
+            <tr>
+                <th> Codigo IMEI</th>
+                <th> Marca/Modelo</th>
+                <th>Cadastrado em</th>
+            </tr>
+                {% for dispositivo in dispositivos %}
+                    <tr>
+                        <td>{{dispositivo.id}}</td>
+                        <td>{{dispositivo.marca_modelo}}</td>
+                        <td>{{dispositivo.data_cadastro}}</td>
+                    </tr>
+                {% endfor %}
+            </ul>
+        </table> 
+{% endblock %}

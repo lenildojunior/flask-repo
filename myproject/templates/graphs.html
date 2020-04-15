@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block nav %}
+<li><a href="{{ url_for('index') }}">Lista</a></li> 
+<li><a href="{{ url_for('mapa') }}">Mapa</a></li> 
+{% endblock %} 
+
+{% block header %}
+  <h1>{% block title %}Graficos{% endblock %}</h1> 
+{% endblock %} 
+{% block content %}
+        <div>Graph1</div>
+        <div><img src='{{ graph1 }}'/></div>
+        <div>Graph2</div>
+        <div><img src='{{ graph2 }}'/></div>
+        <div>Graph3</div>
+        <div><img src='{{ graph3 }}'/></div>
+{% endblock %}
