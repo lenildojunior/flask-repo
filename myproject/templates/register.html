@@ -2,13 +2,31 @@
 
 {% block header %}
   <h1>{% block title %}Cadastro de usuários{% endblock %}</h1> 
-{% endblock %} 
+{% endblock %}
+{% block nav%}
+<li><a href="{{ url_for('graphs') }}">Gráficos</a></li>
+<li><a href="{{ url_for('mapa') }}">Ver mapa</a></li>
+<li><a href="{{ url_for('cadastro_de_dispositivos') }}">Cadastrar dispositivos</a></li>
+{% endblock %}
 {% block content %}
   <form method="post">
+    <label for="nome">Nome completo</label>
+    <input name="nome" id="nome" required>
+    <label for="cpf">CPF</label>
+    <input name="cpf" id="cpf" required>
+    <label for="email">Email</label>
+    <input type="email" name="email" id="email" required>
+    <label for="telefone">Telefone</label>
+    <input name="telefone" id="telefone" required>
     <label for="username">Usuário</label>
     <input name="username" id="username" required>
     <label for="password">Senha</label>
     <input type="password" name="password" id="password" required>
+    <select name="perfil" id="perfil">
+    {% for perfil in perfis %}
+      <option value="{{perfil.id}}">{{perfil.nome}}</option>
+    {% endfor %}
+    </select>
     <input type="submit" value="Register">
   </form>
 {% endblock %}

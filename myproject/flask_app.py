@@ -30,8 +30,18 @@ class frutas(db.Model):
 class usuario(db.Model):
     __tablename__ = "usuario"
     id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(4096))
+    cpf = db.Column(db.String(4096))
+    email = db.Column(db.String(4096))
+    telefone = db.Column(db.String(4096))
     username = db.Column(db.String(4096))
     password = db.Column(db.String(4096))
+    id_perfil = db.Column(db.Integer)
+
+class perfil(db.Model):
+    __tablename__ = "perfil"
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(4096))
 
 class dispositivos(db.Model):
     __tablename__ = "dispositivos"
@@ -121,8 +131,13 @@ def atualizar_cadastro_dispositivo():
 @app.route('/register', methods=('GET', 'POST')) 
 def register():
     if request.method == 'POST':
+        nome_f = request.form['nome']
+        cpf_f = request.form['cpf']
+        email_f = request.form['email']
+        telefone_f = request.form['telefone']
         username = request.form['username']
         password = request.form['password']
+        id_perfil_f = request.form['perfil']
         error = None
         select_text = text("SELECT id from usuario where username= :usuario")
         if not username:
@@ -133,11 +148,12 @@ def register():
         ).fetchone() is not None:
             error = 'User {} is already registered.'.format(username)
         if error is None:
-            insert_query = text("INSERT INTO usuario (username, password) VALUES (:usuario, :senha)")
-            db.engine.execute(insert_query, usuario = username, senha = password)
-            return redirect('login')
+            insert_query = text("INSERT INTO usuario (nome, cpf,telefone, email, username, password, id_perfil) VALUES (:nome, :cpf, :telefone, :email,:usuario, :senha, :id_perfil)")
+            db.engine.execute(insert_query, nome=nome_f, cpf=cpf_f, telefone=telefone_f, email=email_f, id_perfil = id_perfil_f, usuario = username, senha = password)
+            return redirect('/')
         flash(error)
-    return render_template('register.html') 
+    lista_perfis = perfil.query.all()
+    return render_template('register.html',perfis=lista_perfis) 
 @app.route('/login',methods=('GET', 'POST')) 
 def login():
     if request.method == 'POST':
@@ -153,6 +169,7 @@ def login():
         if error is None:
             session.clear()
             session['user_id'] = user['id']
+            session['perfil_id'] = user['id_perfil']
             return redirect('/')
         flash(error)
     return render_template('login.html') 
