@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Atualizar Usuário{% endblock %}</h1>
+{% endblock %}
+{% block nav %}
+<li><a href="{{ url_for('index') }}">Lista</a></li>
+<li><a href="{{ url_for('mapa') }}">Mapa</a></li>
+<li><a href="{{ url_for('graphs') }}">Graficos</a></li>
+{% endblock %}
+
+{% block content %}
+  <form method="POST">
+    <label for="nome">Nome</label>
+    <input name="nome" id="nome" value="{{nome}}">
+    <label for="cpf">CPF</label>
+    <input name="cpf" id="cpf" value="{{cpf}}">
+    <label for="telefone">Telefone</label>
+    <input name="telefone" id="telefone" value="{{telefone}}">
+    <label for="email">Email</label>
+    <input name="email" id="email" value="{{email}}">
+
+    <input type="submit" value="Atualizar">
+  </form>
+{% endblock %}

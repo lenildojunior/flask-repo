@@ -6,14 +6,15 @@
         <h1>Flaskr</h1>
             <ul>
                 {% if g.user %}
-                <li><span>Bem Vindo, {{ g.user['username'] }}</span>
-                {% block nav %}{% endblock %}
-                {% if session['perfil_id'] == 1 %}
-                <li><a href="{{ url_for('register') }}">Cadastro de usuário</a>
-                {% endif %}
-                <li><a href="{{ url_for('logout') }}">Log Out</a>
+                	<li><span>Bem Vindo, {{ g.user['username'] }}</span>
+                	{% block nav %}{% endblock %}
+                	{% if session['perfil_id'] == 1 %}
+                		<li><a href="{{ url_for('register') }}">Cadastro de usuário</a></li>
+				<li><a href="{{ url_for('usuarios') }}"> usuário</a></li>
+                	{% endif %}
+                	<li><a href="{{ url_for('logout') }}">Log Out</a>
                 {% else %}
-                <li><a href="{{ url_for('login') }}">Login</a>
+                	<li><a href="{{ url_for('login') }}">Login</a>
                 {% endif %}
             </ul>
     </nav>

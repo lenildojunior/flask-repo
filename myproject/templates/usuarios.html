@@ -1,0 +1,45 @@
+{% extends 'base.html' %} 
+
+{% block nav %}
+ <li><a href="{{ url_for('graphs') }}">Gráficos</a></li> 
+<li><a href="{{ url_for('mapa') }}">Ver mapa</a></li> 
+<li><a href="{{ url_for('cadastro_de_dispositivos') }}">Cadastrar dispositivos</a></li>
+{% endblock %} 
+
+{% block header %}
+  <h1>{% block title %}Lista de Usuários{% endblock %}</h1>
+ {% endblock %} 
+
+{% block content %}
+ 	<table>
+            <tr>
+                <th>Nome</th>
+                <th>CPF</th>
+                <th>Telefone</th>
+		<th>Email</th>
+		<th>Usuário</th>
+		<th></th>
+		<th></th>
+            </tr>
+                {% for usuario in usuarios %}
+                    <tr>
+                        <td>{{usuario.nome}}</td>
+                        <td>{{usuario.cpf}}</td>
+                        <td>{{usuario.telefone}}</td>
+			<td>{{usuario.email}}</td>
+			<td>{{usuario.username}}</td>
+			<td>
+				<form method="POST" action="" onSubmit="return confirm('Deseja deletar este usuário?');">
+					<button name="inativar" value="{{usuario.id}}" type="submit">Excluir</button>
+				</form>
+			</td>
+			<td>
+                                <form method="POST" action="">
+                                        <button name="atualizar" value="{{usuario.id}}" type="submit">Atualizar</button>
+                                </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </ul>
+        </table> 
+{% endblock %}

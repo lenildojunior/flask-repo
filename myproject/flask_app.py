@@ -2,7 +2,7 @@ import functools
 import folium
 from flask import Flask, render_template , redirect, request,url_for,flash,g,session 
 from flask_sqlalchemy import SQLAlchemy 
-from sqlalchemy import text
+from sqlalchemy import text, and_
 #conversao dos parametos de uma string para a query
 from draw_graph import build_graph
 
@@ -27,6 +27,14 @@ class frutas(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(4096)) 
 
+class contagem(db.Model):
+    __tablename__ = "contagem"
+    id = db.Column(db.Integer, primary_key=True)
+    quantidade = db.Column(db.Integer)
+    numero_faixa = db.Column(db.Integer)
+    data_hora = db.Column(db.DateTime)
+    id_dispositivo = db.Column(db.String(4096))
+
 class usuario(db.Model):
     __tablename__ = "usuario"
     id = db.Column(db.Integer, primary_key=True)
@@ -37,6 +45,7 @@ class usuario(db.Model):
     username = db.Column(db.String(4096))
     password = db.Column(db.String(4096))
     id_perfil = db.Column(db.Integer)
+    ativo = db.Column(db.Integer)
 
 class perfil(db.Model):
     __tablename__ = "perfil"
@@ -88,6 +97,58 @@ def index():
            return redirect('atualizar_cadastro_dispositivo')
     return redirect('login')
 
+@app.route('/usuarios',methods=('GET','POST'))
+@login_required
+def usuarios():
+    if request.method == "GET":
+        lista_usuarios = usuario.query.filter_by(ativo=1)
+        return render_template('usuarios.html',usuarios=lista_usuarios)
+    if request.method == "POST":
+        id_inativar = request.form.get('inativar')
+        id_update = request.form.get('atualizar')
+        if id_inativar is not None:
+            inativa_usuario = usuario.query.filter_by(id=id_inativar).first()
+            inativa_usuario.ativo = 0
+            db.session.commit()
+            return redirect('usuarios')
+        if id_update is not None:
+           usuario_to_update = usuario.query.filter_by(id = id_update).first()
+           session['u_id'] = usuario_to_update.id
+           session['u_nome'] = usuario_to_update.nome
+           session['u_cpf'] = usuario_to_update.cpf
+           session['u_telefone'] = usuario_to_update.telefone
+           session['u_email'] = usuario_to_update.email
+           return redirect('atualizar_cadastro_usuario')
+    return redirect('login')
+@app.route('/atualizar_cadastro_usuario',methods=('GET','POST'))
+@login_required
+def atualizar_cadastro_usuario():
+    if request.method == 'GET':
+        if session.get('u_nome') is not None:
+            nome_up = session.get('u_nome')
+            cpf_up = session.get('u_cpf')
+            telefone_up = session.get('u_telefone')
+            email_up = session.get('u_email')
+            return render_template('atualizar_cadastro_usuario.html',nome = nome_up, cpf = cpf_up, telefone = telefone_up, email = email_up)
+    if request.method == 'POST':
+        nome = request.form['marca_modelo']
+        cpf = request.form['cpf']
+        telefone = request.form['telefone']
+        email = request.form['email']
+        usuario_update = usuario.query.filter_by(id = session.get('u_id')).first()
+        usuario_update.nome = nome
+        usuario_update.cpf = cpf
+        usuario_update.telefone = telefone
+        usuario_update.email = email
+        db.session.commit()
+        session.pop('u_id',None)
+        session.pop('u_nome',None)
+        session.pop('u_cpf',None)
+        session.pop('u_telefone',None)
+        return redirect('usuarios')
+
+
+
 @app.route('/cadastro_de_dispositivos',methods=('GET', 'POST'))
 @login_required
 def cadastro_de_dispositivos():
@@ -125,6 +186,7 @@ def atualizar_cadastro_dispositivo():
         dispositivo_update.marca_modelo = marca_modelo
         db.session.commit()
         session.pop('dispositivo_id',None)
+        session.pop('marca_modelo',None)
         return redirect('/')
 #    return render_template('atualizar_cadastro_dispositivo.html',id = id_up, marca = marca_up)
 
@@ -148,7 +210,7 @@ def register():
         ).fetchone() is not None:
             error = 'User {} is already registered.'.format(username)
         if error is None:
-            insert_query = text("INSERT INTO usuario (nome, cpf,telefone, email, username, password, id_perfil) VALUES (:nome, :cpf, :telefone, :email,:usuario, :senha, :id_perfil)")
+            insert_query = text("INSERT INTO usuario (nome, cpf,telefone, email, username, password, ativo, id_perfil) VALUES (:nome, :cpf, :telefone, :email,:usuario, :senha, 1, :id_perfil)")
             db.engine.execute(insert_query, nome=nome_f, cpf=cpf_f, telefone=telefone_f, email=email_f, id_perfil = id_perfil_f, usuario = username, senha = password)
             return redirect('/')
         flash(error)
@@ -193,13 +255,19 @@ def load_logged_in_user():
 @app.route('/graphs') 
 @login_required 
 def graphs():
-    eixo_x = frutas.query.all()
+    lista1 = contagem.query.filter_by(numero_faixa = 1,id_dispositivo = "353114091675712")
+    lista2 = contagem.query.filter_by(numero_faixa = 2,id_dispositivo = "353114091675712")
     eixo_x_list = []
-    eixo_y_list = []
-    for fruta in eixo_x:
-        eixo_x_list.append(fruta.nome)
-        eixo_y_list.append(fruta.id)
-    graph_url = build_graph(eixo_x_list,eixo_y_list)
+    eixo_y_list1 = []
+    eixo_y_list2 = []
+    for registro in lista1:
+        horario = registro.data_hora.strftime("%H") + ":" + registro.data_hora.strftime("%M")
+        data = registro.data_hora.strftime("%d") + "/" + registro.data_hora.strftime("%m") + "/" + registro.data_hora.strftime("%Y") 
+        eixo_x_list.append(horario)
+        eixo_y_list1.append(registro.quantidade)
+    for registro in lista2:
+        eixo_y_list2.append(registro.quantidade)
+    graph_url = build_graph(eixo_x_list,eixo_y_list1,eixo_y_list2,data)
     return render_template('graphs.html',graph1 = graph_url,graph2 = graph_url,graph3 = graph_url) 
 
 @app.route('/mapa') 
@@ -209,7 +277,7 @@ def mapa():
     start_coords = (-5.834575, -35.2207787) #Coordenadas de Natal
     folium_map = folium.Map(location=start_coords, zoom_start=13)
     site = url_for('graphs')
-    html = "<a href= '" + site + "' target='_blank'>Ver gráficos</h1></a>"
+    html = " <a href= '" + site + "' target='_blank'>Ver gráficos</a>"
     for coordenadas in lista_coordenadas:
         folium.Marker(location = (float((coordenadas.latitude).replace(',','.')),float((coordenadas.longitude).replace(',','.'))),popup=folium.Popup(html), icon=folium.Icon(color='green')).add_to(folium_map) #Adicionando uma marcação no mapa
     #folium.Marker(location = (-5.8112895,-35.2084236),popup=folium.Popup(html), icon=folium.Icon(color='green')).add_to(folium_map)#Adicionando uma marcação no mapa

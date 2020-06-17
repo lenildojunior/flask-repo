@@ -1,41 +1,29 @@
-{% extends 'base.html' %} 
+{% extends 'base.html' %}
 
 {% block nav %}
- <li><a href="{{ url_for('graphs') }}">Gráficos</a></li> 
-<li><a href="{{ url_for('mapa') }}">Ver mapa</a></li> 
+<li><a href="{{ url_for('graphs') }}">Gráficos</a></li>
+<li><a href="{{ url_for('mapa') }}">Ver mapa</a></li>
 <li><a href="{{ url_for('cadastro_de_dispositivos') }}">Cadastrar dispositivos</a></li>
-{% endblock %} 
+{% endblock %}
 
 {% block header %}
   <h1>{% block title %}Lista de Dispositivos{% endblock %}</h1>
- {% endblock %} 
+{% endblock %}
 
 {% block content %}
- 	<table>
+        <table>
             <tr>
                 <th> Codigo IMEI</th>
                 <th> Marca/Modelo</th>
                 <th>Cadastrado em</th>
-		<th></th>
-		<th></th>
             </tr>
                 {% for dispositivo in dispositivos %}
                     <tr>
                         <td>{{dispositivo.id}}</td>
                         <td>{{dispositivo.marca_modelo}}</td>
                         <td>{{dispositivo.data_cadastro}}</td>
-			<td>
-				<form method="POST" action="" onSubmit="return confirm('Deseja deletar este dispositivo?');">
-					<button name="inativar" value="{{dispositivo.id}}" type="submit">Excluir</button>
-				</form>
-			</td>
-			<td>
-                                <form method="POST" action="">
-                                        <button name="atualizar" value="{{dispositivo.id}}" type="submit">Atualizar</button>
-                                </form>
-                        </td>
                     </tr>
                 {% endfor %}
             </ul>
-        </table> 
+        </table>
 {% endblock %}
