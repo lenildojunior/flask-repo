@@ -5,6 +5,9 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text, and_
 #conversao dos parametos de uma string para a query
 from draw_graph import build_graph
+#Usando geolocalizacao
+from geopy.geocoders import Nominatim
+geolocator = Nominatim(user_agent="flask_app")
 
 
 # create and configure the app
@@ -13,8 +16,10 @@ app.config["DEBUG"] = True
 app.secret_key = 'dev' 
 app.add_url_rule('/', endpoint='index') #Comando para instanciar a pagina '/' como index no url_for 
 SQLALCHEMY_DATABASE_URI = "mysql+mysqlconnector://{username}:{password}@{hostname}/{databasename}".format(
-    username = "lenildojunior",
-    password="fone6058",
+    #username = "lenildojunior",
+    #password="fone6058",
+    username = "root",
+    password = "*chicoADM*1",
     hostname="localhost",
     databasename="frutas", )
 #Set the app config values for Database connection
@@ -118,6 +123,7 @@ def usuarios():
            session['u_cpf'] = usuario_to_update.cpf
            session['u_telefone'] = usuario_to_update.telefone
            session['u_email'] = usuario_to_update.email
+           session['u_perfil'] = usuario_to_update.id_perfil
            return redirect('atualizar_cadastro_usuario')
     return redirect('login')
 @app.route('/atualizar_cadastro_usuario',methods=('GET','POST'))
@@ -129,22 +135,27 @@ def atualizar_cadastro_usuario():
             cpf_up = session.get('u_cpf')
             telefone_up = session.get('u_telefone')
             email_up = session.get('u_email')
-            return render_template('atualizar_cadastro_usuario.html',nome = nome_up, cpf = cpf_up, telefone = telefone_up, email = email_up)
+            perfil_up = session.get('u_perfil')
+            lista_perfis = perfil.query.all()
+            return render_template('atualizar_cadastro_usuario.html',nome = nome_up, cpf = cpf_up, telefone = telefone_up, email = email_up, perfis = lista_perfis)
     if request.method == 'POST':
         nome = request.form['marca_modelo']
         cpf = request.form['cpf']
         telefone = request.form['telefone']
         email = request.form['email']
+        perfil_id = request.form['perfil']
         usuario_update = usuario.query.filter_by(id = session.get('u_id')).first()
         usuario_update.nome = nome
         usuario_update.cpf = cpf
         usuario_update.telefone = telefone
         usuario_update.email = email
+        usuario_update.id_perfil = perfil_id
         db.session.commit()
         session.pop('u_id',None)
         session.pop('u_nome',None)
         session.pop('u_cpf',None)
         session.pop('u_telefone',None)
+        session.pop('u_perfil',None)
         return redirect('usuarios')
 
 
@@ -268,7 +279,29 @@ def graphs():
     for registro in lista2:
         eixo_y_list2.append(registro.quantidade)
     graph_url = build_graph(eixo_x_list,eixo_y_list1,eixo_y_list2,data)
-    return render_template('graphs.html',graph1 = graph_url,graph2 = graph_url,graph3 = graph_url) 
+    return render_template('graphs.html',graph1 = graph_url) 
+
+@app.route('/graphs/<string:id_d>') 
+@login_required 
+def graphs_param(id_d):
+    coordenadas = localizacao.query.filter_by(id_dispositivo = id_d).first()
+    #pegando o dicionario do endereco
+    local_dict = (geolocator.reverse(coordenadas.latitude + "," + coordenadas.longitude)).raw['address']
+    local = local_dict['road'] + ", " + local_dict['suburb'] + " - " + local_dict['city'] + "/" + local_dict['state']
+    lista1 = contagem.query.filter_by(numero_faixa = 1,id_dispositivo = id_d)
+    lista2 = contagem.query.filter_by(numero_faixa = 2,id_dispositivo = id_d)
+    eixo_x_list = []
+    eixo_y_list1 = []
+    eixo_y_list2 = []
+    for registro in lista1:
+        horario = registro.data_hora.strftime("%H") + ":" + registro.data_hora.strftime("%M")
+        data = registro.data_hora.strftime("%d") + "/" + registro.data_hora.strftime("%m") + "/" + registro.data_hora.strftime("%Y") 
+        eixo_x_list.append(horario)
+        eixo_y_list1.append(registro.quantidade)
+    for registro in lista2:
+        eixo_y_list2.append(registro.quantidade)
+    graph_url = build_graph(eixo_x_list,eixo_y_list1,eixo_y_list2,data)
+    return render_template('graphs.html',graph1 = graph_url, localizacao = local) 
 
 @app.route('/mapa') 
 @login_required 
@@ -276,9 +309,9 @@ def mapa():
     lista_coordenadas = localizacao.query.all()
     start_coords = (-5.834575, -35.2207787) #Coordenadas de Natal
     folium_map = folium.Map(location=start_coords, zoom_start=13)
-    site = url_for('graphs')
-    html = " <a href= '" + site + "' target='_blank'>Ver gráficos</a>"
     for coordenadas in lista_coordenadas:
+        site = url_for('graphs') + '/' + coordenadas.id_dispositivo
+        html = " <a href= '" + site + "' target='_blank'>Ver gráficos</a>"
         folium.Marker(location = (float((coordenadas.latitude).replace(',','.')),float((coordenadas.longitude).replace(',','.'))),popup=folium.Popup(html), icon=folium.Icon(color='green')).add_to(folium_map) #Adicionando uma marcação no mapa
     #folium.Marker(location = (-5.8112895,-35.2084236),popup=folium.Popup(html), icon=folium.Icon(color='green')).add_to(folium_map)#Adicionando uma marcação no mapa
     folium_map.save('templates/folium.html')

@@ -19,6 +19,16 @@
     <input name="telefone" id="telefone" value="{{telefone}}">
     <label for="email">Email</label>
     <input name="email" id="email" value="{{email}}">
+    <label for="perfil">Perfil</label>
+    <select name="perfil" id="perfil">
+    {% for perfil in perfis %}
+      {% if session['u_perfil'] == perfil.id %}
+        <option value="{{perfil.id}}" selected="true">{{perfil.nome}}</option>
+      {% else %}
+        <option value="{{perfil.id}}">{{perfil.nome}}</option>
+      {% endif %}
+    {% endfor %}
+    </select>
 
     <input type="submit" value="Atualizar">
   </form>
