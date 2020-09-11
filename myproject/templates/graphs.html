@@ -9,6 +9,17 @@
   <h1>{% block title %}Graficos -  {{ localizacao }}{% endblock %}</h1> 
 {% endblock %} 
 {% block content %}
-        <div>Graph1</div>
+        <div>
+        	<label>Tipo de Gráfico</label>
+        	<select onchange="location = this.value">
+        		{% if session['tipo_graf_escolhido'] == 'bar' %}
+        			<option value="{{ url_for('graphs') + '/' + session['id_dispositivo'] + '/bar' }}" selected="true">Barras</option>
+        		<option value="{{ url_for('graphs') + '/' + session['id_dispositivo'] + '/line' }}">Linhas</option>
+        		{% else %}
+        		<option value="{{ url_for('graphs') + '/' + session['id_dispositivo'] + '/bar' }}">Barras</option>
+        		<option value="{{ url_for('graphs') + '/' + session['id_dispositivo'] + '/line' }}" selected="true">Linhas</option>
+        		{% endif %}
+        	</select>
+        </div>
         <div><img src='{{ graph1 }}'/></div>
 {% endblock %}

@@ -281,9 +281,9 @@ def graphs():
     graph_url = build_graph(eixo_x_list,eixo_y_list1,eixo_y_list2,data)
     return render_template('graphs.html',graph1 = graph_url) 
 
-@app.route('/graphs/<string:id_d>') 
+@app.route('/graphs/<string:id_d>/<string:tipo_graf>') 
 @login_required 
-def graphs_param(id_d):
+def graphs_param(id_d,tipo_graf):
     coordenadas = localizacao.query.filter_by(id_dispositivo = id_d).first()
     #pegando o dicionario do endereco
     local_dict = (geolocator.reverse(coordenadas.latitude + "," + coordenadas.longitude)).raw['address']
@@ -300,7 +300,9 @@ def graphs_param(id_d):
         eixo_y_list1.append(registro.quantidade)
     for registro in lista2:
         eixo_y_list2.append(registro.quantidade)
-    graph_url = build_graph(eixo_x_list,eixo_y_list1,eixo_y_list2,data)
+    graph_url = build_graph(eixo_x_list,eixo_y_list1,eixo_y_list2,data,tipo_graf)
+    session['id_dispositivo'] = str(request.path).split('/')[2]
+    session['tipo_graf_escolhido'] = str(request.path).split('/')[3]
     return render_template('graphs.html',graph1 = graph_url, localizacao = local) 
 
 @app.route('/mapa') 
@@ -310,7 +312,7 @@ def mapa():
     start_coords = (-5.834575, -35.2207787) #Coordenadas de Natal
     folium_map = folium.Map(location=start_coords, zoom_start=13)
     for coordenadas in lista_coordenadas:
-        site = url_for('graphs') + '/' + coordenadas.id_dispositivo
+        site = url_for('graphs') + '/' + coordenadas.id_dispositivo + '/bar'
         html = " <a href= '" + site + "' target='_blank'>Ver gráficos</a>"
         folium.Marker(location = (float((coordenadas.latitude).replace(',','.')),float((coordenadas.longitude).replace(',','.'))),popup=folium.Popup(html), icon=folium.Icon(color='green')).add_to(folium_map) #Adicionando uma marcação no mapa
     #folium.Marker(location = (-5.8112895,-35.2084236),popup=folium.Popup(html), icon=folium.Icon(color='green')).add_to(folium_map)#Adicionando uma marcação no mapa
