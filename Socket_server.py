@@ -37,7 +37,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 			
 				query_busca_dispositivo = "SELECT * FROM dispositivos where id=" + IMEI
 				query_busca_disp_localizacao = "SELECT * FROM localizacao where id_dispositivo=" + IMEI
-				query_insert_localizacao = "INSERT INTO localizacao VALUES ( %s, %s, %s)"
+				query_insert_localizacao = "INSERT INTO localizacao(id_dispositivo,latitude,longitude) VALUES ( %s, %s, %s)"
 				query_update_localizacao = "UPDATE localizacao SET latitude = %s, longitude = %s WHERE id_dispositivo = %s"
 
 				cur.execute(query_busca_dispositivo)

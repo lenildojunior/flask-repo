@@ -70,6 +70,8 @@ class localizacao(db.Model):
     id_dispositivo = db.Column(db.String(4096), primary_key=True)
     latitude = db.Column(db.String(4096))
     longitude = db.Column(db.String(4096))
+    qtd_faixas = db.Column(db.Integer)
+    data_realocacao = db.Column(db.DateTime)
 
 
 #Funcao para verificar se o usuario esta logado antes de ir para esta pagina
@@ -284,10 +286,11 @@ def graphs():
 @app.route('/graphs/<string:id_d>/<string:tipo_graf>') 
 @login_required 
 def graphs_param(id_d,tipo_graf):
-    coordenadas = localizacao.query.filter_by(id_dispositivo = id_d).first()
+    localizacao_disp = localizacao.query.filter_by(id_dispositivo = id_d).first()
     #pegando o dicionario do endereco
-    local_dict = (geolocator.reverse(coordenadas.latitude + "," + coordenadas.longitude)).raw['address']
+    local_dict = (geolocator.reverse(localizacao_disp.latitude + "," + localizacao_disp.longitude)).raw['address']
     local = local_dict['road'] + ", " + local_dict['suburb'] + " - " + local_dict['city'] + "/" + local_dict['state']
+    #cada via possui no mínimo duas faixas
     lista1 = contagem.query.filter_by(numero_faixa = 1,id_dispositivo = id_d)
     lista2 = contagem.query.filter_by(numero_faixa = 2,id_dispositivo = id_d)
     eixo_x_list = []
@@ -300,7 +303,17 @@ def graphs_param(id_d,tipo_graf):
         eixo_y_list1.append(registro.quantidade)
     for registro in lista2:
         eixo_y_list2.append(registro.quantidade)
-    graph_url = build_graph(eixo_x_list,eixo_y_list1,eixo_y_list2,data,tipo_graf)
+
+    #Se houver uma terceira faixa
+    if(localizacao_disp.qtd_faixas == 3):
+        lista3 = contagem.query.filter_by(numero_faixa = 3,id_dispositivo = id_d)
+        eixo_y_list3 = []
+        for registro in lista3:
+            eixo_y_list3.append(registro.quantidade)
+        graph_url = build_graph(eixo_x_list,eixo_y_list1,eixo_y_list2,eixo_y_list3,data,tipo_graf)
+    else:
+        graph_url = build_graph(eixo_x_list,eixo_y_list1,eixo_y_list2,data,tipo_graf)
+    
     session['id_dispositivo'] = str(request.path).split('/')[2]
     session['tipo_graf_escolhido'] = str(request.path).split('/')[3]
     return render_template('graphs.html',graph1 = graph_url, localizacao = local) 

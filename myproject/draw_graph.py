@@ -5,6 +5,16 @@ import base64
  
 def build_graph(x_coordinates, y_coordinates1,y_coordinates2,data,tipo_graf):
     img = io.BytesIO()
+    #Funcao para adicionar os valores de cada barra
+    def autolabel(rects):
+        for rect in rects:
+            height = rect.get_height()
+            ax.annotate('{}'.format(height),
+                        xy=(rect.get_x() + rect.get_width() / 2, height),
+                        xytext=(0, 3),  # 3 points vertical offset
+                        textcoords="offset points",
+                        ha='center', va='bottom')
+
     if(tipo_graf == 'bar'):
         fig,ax = plt.subplots()
         bar_width = 0.35
@@ -20,16 +30,6 @@ def build_graph(x_coordinates, y_coordinates1,y_coordinates2,data,tipo_graf):
         plt.xlabel('Horário')
         plt.ylabel('Quantitativo')
         plt.title('Quantidade de veiculos por horário - ' + data)
-
-        #Funcao para adicionar os valores de cada barra
-        def autolabel(rects):
-            for rect in rects:
-                height = rect.get_height()
-                ax.annotate('{}'.format(height),
-                            xy=(rect.get_x() + rect.get_width() / 2, height),
-                            xytext=(0, 3),  # 3 points vertical offset
-                            textcoords="offset points",
-                            ha='center', va='bottom')
         autolabel(rects1)
         autolabel(rects2)
         plt.legend()
@@ -45,11 +45,13 @@ def build_graph(x_coordinates, y_coordinates1,y_coordinates2,data,tipo_graf):
             label_x.append(horario)
         plt.plot(label_x,y_coordinates1,label = 'Faixa 1')
         plt.plot(label_x,y_coordinates2,label = 'Faixa 2')
+        plt.scatter(label_x,y_coordinates1)
+        plt.scatter(label_x,y_coordinates2)
         plt.xlabel('Horário')
         plt.ylabel('Quantitativo')
         plt.title('Quantidade de veiculos por horário - ' + data)
         plt.legend()
-
+        plt.grid(True)
         plt.savefig(img, format='png')
         img.seek(0)
         graph_url = base64.b64encode(img.getvalue()).decode()
