@@ -40,6 +40,7 @@ class contagem(db.Model):
     data_hora = db.Column(db.DateTime)
     id_dispositivo = db.Column(db.String(4096))
 
+
 class usuario(db.Model):
     __tablename__ = "usuario"
     id = db.Column(db.Integer, primary_key=True)
@@ -290,6 +291,15 @@ def graphs_param(id_d,tipo_graf):
     #pegando o dicionario do endereco
     local_dict = (geolocator.reverse(localizacao_disp.latitude + "," + localizacao_disp.longitude)).raw['address']
     local = local_dict['road'] + ", " + local_dict['suburb'] + " - " + local_dict['city'] + "/" + local_dict['state']
+    
+    #pegando todos os dispositivos que possuem contagem
+    dispositivos_com_contagem = contagem.query.with_entities(contagem.id_dispositivo).distinct()
+    locais = []
+    for disp in dispositivos_com_contagem:
+        locais_disp = localizacao.query.filter_by(id_dispositivo = disp.id_dispositivo).first()
+        locais_dict = (geolocator.reverse(locais_disp.latitude + "," + locais_disp.longitude)).raw['address']
+        locais.append((disp.id_dispositivo,locais_dict['road'] + ", " + locais_dict['suburb'] + " - " + locais_dict['city']))
+
     #cada via possui no mínimo duas faixas
     lista1 = contagem.query.filter_by(numero_faixa = 1,id_dispositivo = id_d)
     lista2 = contagem.query.filter_by(numero_faixa = 2,id_dispositivo = id_d)
@@ -316,7 +326,7 @@ def graphs_param(id_d,tipo_graf):
     
     session['id_dispositivo'] = str(request.path).split('/')[2]
     session['tipo_graf_escolhido'] = str(request.path).split('/')[3]
-    return render_template('graphs.html',graph1 = graph_url, localizacao = local) 
+    return render_template('graphs.html',graph1 = graph_url, localizacao = local,lista_locais = locais) 
 
 @app.route('/mapa') 
 @login_required 

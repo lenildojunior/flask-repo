@@ -20,6 +20,25 @@
         		<option value="{{ url_for('graphs') + '/' + session['id_dispositivo'] + '/line' }}" selected="true">Linhas</option>
         		{% endif %}
         	</select>
+            <br/>
+            <label>Dispostivo</label>
+            <select onchange="location = this.value">
+                {% for local in lista_locais %}
+                    {% if session['tipo_graf_escolhido'] == 'bar' %}
+                        {% if session['id_dispositivo'] == local[0] %}
+                            <option value="{{ url_for('graphs') + '/' + local[0] + '/bar' }}" selected="true">{{local[1]}}</option>
+                        {% else %}
+                            <option value="{{ url_for('graphs') + '/' + local[0] + '/bar' }}">{{local[1]}}</option>
+                        {% endif %}
+                    }
+                    {% else %}
+                        <option value="{{ url_for('graphs') + '/' + local[0] + '/line' }}">{{local[1]}}</option>
+                    {% endif %}
+                {% endfor %}
+                
+
+                
+            </select>
         </div>
         <div><img src='{{ graph1 }}'/></div>
 {% endblock %}
