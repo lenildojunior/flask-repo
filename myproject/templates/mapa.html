@@ -9,7 +9,6 @@
                 <li><span>Bem Vindo, {{ g.user['username'] }}</span>
                 <li><a href="{{ url_for('logout') }}">Log Out</a>
                 <li><a href="{{ url_for('index') }}">Lista</a></li>
-                <li><a href="{{ url_for('graphs') }}">Graficos</a></li>
             </ul>
     </nav>
     {% include "folium.html" %}

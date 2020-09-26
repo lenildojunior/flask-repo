@@ -266,7 +266,7 @@ def load_logged_in_user():
             "SELECT * FROM usuario WHERE id = :id_usuario"), id_usuario = user_id
         ).fetchone() 
 
-@app.route('/graphs') 
+'''@app.route('/graphs') 
 @login_required 
 def graphs():
     lista1 = contagem.query.filter_by(numero_faixa = 1,id_dispositivo = "353114091675712")
@@ -282,50 +282,51 @@ def graphs():
     for registro in lista2:
         eixo_y_list2.append(registro.quantidade)
     graph_url = build_graph(eixo_x_list,eixo_y_list1,eixo_y_list2,data)
-    return render_template('graphs.html',graph1 = graph_url) 
+    return render_template('graphs.html',graph1 = graph_url) '''
 
 @app.route('/graphs/<string:id_d>/<string:tipo_graf>') 
 @login_required 
-def graphs_param(id_d,tipo_graf):
-    localizacao_disp = localizacao.query.filter_by(id_dispositivo = id_d).first()
-    #pegando o dicionario do endereco
-    local_dict = (geolocator.reverse(localizacao_disp.latitude + "," + localizacao_disp.longitude)).raw['address']
-    local = local_dict['road'] + ", " + local_dict['suburb'] + " - " + local_dict['city'] + "/" + local_dict['state']
-    
-    #pegando todos os dispositivos que possuem contagem
-    dispositivos_com_contagem = contagem.query.with_entities(contagem.id_dispositivo).distinct()
-    locais = []
-    for disp in dispositivos_com_contagem:
-        locais_disp = localizacao.query.filter_by(id_dispositivo = disp.id_dispositivo).first()
-        locais_dict = (geolocator.reverse(locais_disp.latitude + "," + locais_disp.longitude)).raw['address']
-        locais.append((disp.id_dispositivo,locais_dict['road'] + ", " + locais_dict['suburb'] + " - " + locais_dict['city']))
+def graphs(id_d,tipo_graf,methods=('GET', 'POST')):
+    if request.method == 'GET':
+        localizacao_disp = localizacao.query.filter_by(id_dispositivo = id_d).first()
+        #pegando o dicionario do endereco
+        local_dict = (geolocator.reverse(localizacao_disp.latitude + "," + localizacao_disp.longitude)).raw['address']
+        local = local_dict['road'] + ", " + local_dict['suburb'] + " - " + local_dict['city'] + "/" + local_dict['state']
+        
+        #pegando todos os dispositivos que possuem contagem
+        dispositivos_com_contagem = contagem.query.with_entities(contagem.id_dispositivo).distinct()
+        locais = []
+        for disp in dispositivos_com_contagem:
+            locais_disp = localizacao.query.filter_by(id_dispositivo = disp.id_dispositivo).first()
+            locais_dict = (geolocator.reverse(locais_disp.latitude + "," + locais_disp.longitude)).raw['address']
+            locais.append((disp.id_dispositivo,locais_dict['road'] + ", " + locais_dict['suburb'] + " - " + locais_dict['city']))
 
-    #cada via possui no mínimo duas faixas
-    lista1 = contagem.query.filter_by(numero_faixa = 1,id_dispositivo = id_d)
-    lista2 = contagem.query.filter_by(numero_faixa = 2,id_dispositivo = id_d)
-    eixo_x_list = []
-    eixo_y_list1 = []
-    eixo_y_list2 = []
-    for registro in lista1:
-        horario = registro.data_hora.strftime("%H") + ":" + registro.data_hora.strftime("%M")
-        data = registro.data_hora.strftime("%d") + "/" + registro.data_hora.strftime("%m") + "/" + registro.data_hora.strftime("%Y") 
-        eixo_x_list.append(horario)
-        eixo_y_list1.append(registro.quantidade)
-    for registro in lista2:
-        eixo_y_list2.append(registro.quantidade)
+        #cada via possui no mínimo duas faixas
+        lista1 = contagem.query.filter_by(numero_faixa = 1,id_dispositivo = id_d)
+        lista2 = contagem.query.filter_by(numero_faixa = 2,id_dispositivo = id_d)
+        eixo_x_list = []
+        eixo_y_list1 = []
+        eixo_y_list2 = []
+        for registro in lista1:
+            horario = registro.data_hora.strftime("%H") + ":" + registro.data_hora.strftime("%M")
+            data = registro.data_hora.strftime("%d") + "/" + registro.data_hora.strftime("%m") + "/" + registro.data_hora.strftime("%Y") 
+            eixo_x_list.append(data + ' - ' + horario)
+            eixo_y_list1.append(registro.quantidade)
+        for registro in lista2:
+            eixo_y_list2.append(registro.quantidade)
 
-    #Se houver uma terceira faixa
-    if(localizacao_disp.qtd_faixas == 3):
-        lista3 = contagem.query.filter_by(numero_faixa = 3,id_dispositivo = id_d)
-        eixo_y_list3 = []
-        for registro in lista3:
-            eixo_y_list3.append(registro.quantidade)
-        graph_url = build_graph(eixo_x_list,eixo_y_list1,eixo_y_list2,eixo_y_list3,data,tipo_graf)
-    else:
-        graph_url = build_graph(eixo_x_list,eixo_y_list1,eixo_y_list2,data,tipo_graf)
-    
-    session['id_dispositivo'] = str(request.path).split('/')[2]
-    session['tipo_graf_escolhido'] = str(request.path).split('/')[3]
+        #Se houver uma terceira faixa
+        if(localizacao_disp.qtd_faixas == 3):
+            lista3 = contagem.query.filter_by(numero_faixa = 3,id_dispositivo = id_d)
+            eixo_y_list3 = []
+            for registro in lista3:
+                eixo_y_list3.append(registro.quantidade)
+            graph_url = build_graph(eixo_x_list,eixo_y_list1,eixo_y_list2,eixo_y_list3,data,tipo_graf)
+        else:
+            graph_url = build_graph(eixo_x_list,eixo_y_list1,eixo_y_list2,data,tipo_graf)
+        
+        session['id_dispositivo'] = str(request.path).split('/')[2]
+        session['tipo_graf_escolhido'] = str(request.path).split('/')[3]
     return render_template('graphs.html',graph1 = graph_url, localizacao = local,lista_locais = locais) 
 
 @app.route('/mapa') 
@@ -335,7 +336,8 @@ def mapa():
     start_coords = (-5.834575, -35.2207787) #Coordenadas de Natal
     folium_map = folium.Map(location=start_coords, zoom_start=13)
     for coordenadas in lista_coordenadas:
-        site = url_for('graphs') + '/' + coordenadas.id_dispositivo + '/bar'
+        #site = url_for('graphs') + '/' + coordenadas.id_dispositivo + '/bar'
+        site = url_for('graphs',id_d = coordenadas.id_dispositivo, tipo_graf = 'bar')
         html = " <a href= '" + site + "' target='_blank'>Ver gráficos</a>"
         folium.Marker(location = (float((coordenadas.latitude).replace(',','.')),float((coordenadas.longitude).replace(',','.'))),popup=folium.Popup(html), icon=folium.Icon(color='green')).add_to(folium_map) #Adicionando uma marcação no mapa
     #folium.Marker(location = (-5.8112895,-35.2084236),popup=folium.Popup(html), icon=folium.Icon(color='green')).add_to(folium_map)#Adicionando uma marcação no mapa

@@ -13,11 +13,11 @@
         	<label>Tipo de Gráfico</label>
         	<select onchange="location = this.value">
         		{% if session['tipo_graf_escolhido'] == 'bar' %}
-        			<option value="{{ url_for('graphs') + '/' + session['id_dispositivo'] + '/bar' }}" selected="true">Barras</option>
-        		<option value="{{ url_for('graphs') + '/' + session['id_dispositivo'] + '/line' }}">Linhas</option>
+        			<option value="{{ url_for('graphs',id_d = session['id_dispositivo'], tipo_graf = 'bar') }}" selected="true">Barras</option>
+        		<option value="{{ url_for('graphs',id_d = session['id_dispositivo'], tipo_graf = 'line') }}">Linhas</option>
         		{% else %}
-        		<option value="{{ url_for('graphs') + '/' + session['id_dispositivo'] + '/bar' }}">Barras</option>
-        		<option value="{{ url_for('graphs') + '/' + session['id_dispositivo'] + '/line' }}" selected="true">Linhas</option>
+        		<option value="{{ url_for('graphs',id_d = session['id_dispositivo'], tipo_graf = 'bar') }}">Barras</option>
+        		<option value="{{ url_for('graphs',id_d = session['id_dispositivo'], tipo_graf = 'line') }}" selected="true">Linhas</option>
         		{% endif %}
         	</select>
             <br/>
@@ -26,19 +26,21 @@
                 {% for local in lista_locais %}
                     {% if session['tipo_graf_escolhido'] == 'bar' %}
                         {% if session['id_dispositivo'] == local[0] %}
-                            <option value="{{ url_for('graphs') + '/' + local[0] + '/bar' }}" selected="true">{{local[1]}}</option>
+                            <option value="{{ url_for('graphs',id_d = local[0], tipo_graf = 'bar') }}" selected="true">{{local[1]}}</option>
                         {% else %}
-                            <option value="{{ url_for('graphs') + '/' + local[0] + '/bar' }}">{{local[1]}}</option>
+                            <option value="{{ url_for('graphs',id_d = local[0], tipo_graf = 'bar') }}">{{local[1]}}</option>
                         {% endif %}
                     }
                     {% else %}
-                        <option value="{{ url_for('graphs') + '/' + local[0] + '/line' }}">{{local[1]}}</option>
+                        <option value="{{ url_for('graphs',id_d = local[0], tipo_graf = 'line') }}">{{local[1]}}</option>
                     {% endif %}
-                {% endfor %}
-                
-
-                
-            </select>
+                {% endfor %}   
+            </select><br/>
+            <label>Data Inicial</label>
+            <input type="date" name="dataInicial" value="dataFinal">
+            <label>Data Final</label>
+            <input type="date" name="dataInicial" value="dataFinal" >
+            <button type="submit">Aplicar Filtro</button>
         </div>
         <div><img src='{{ graph1 }}'/></div>
 {% endblock %}
