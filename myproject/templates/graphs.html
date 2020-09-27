@@ -1,5 +1,32 @@
 {% extends 'base.html' %}
 
+
+{% block head %}
+    <script type="text/javascript">
+
+        function checarFiltroData() {
+            /*Verifica se o filtro foi habilitado*/
+            if (document.getElementById('habilitaFiltroData').checked){
+                document.getElementById('opcoesFiltro').style.display = 'block';
+                //Veririca o tipo de filtro
+                if (document.getElementById('dataEspecifica').checked) {
+                    document.getElementById('filtroDataEspecifica').style.display = 'block';
+                    document.getElementById('filtroIntervaloDatas').style.display = 'none';
+                } else if(document.getElementById('intervaloDatas').checked){
+                    document.getElementById('filtroIntervaloDatas').style.display = 'block';
+                    document.getElementById('filtroDataEspecifica').style.display = 'none';
+                }
+            }
+            else{
+                document.getElementById('opcoesFiltro').style.display = 'none';
+                document.getElementById('filtroDataEspecifica').style.display = 'none';
+                document.getElementById('filtroIntervaloDatas').style.display = 'none';
+            }
+            
+        };
+
+    </script>
+{% endblock %}
 {% block nav %}
 <li><a href="{{ url_for('index') }}">Lista</a></li> 
 <li><a href="{{ url_for('mapa') }}">Mapa</a></li> 
@@ -36,11 +63,38 @@
                     {% endif %}
                 {% endfor %}   
             </select><br/>
-            <label>Data Inicial</label>
-            <input type="date" name="dataInicial" value="dataFinal">
-            <label>Data Final</label>
-            <input type="date" name="dataInicial" value="dataFinal" >
-            <button type="submit">Aplicar Filtro</button>
+
+            <!-- Verificar se será utilizado filtro por datas -->
+            <label for="habilitaFiltroData">Habilitar filtro por datas</label>
+            <input type="checkbox" id="habilitaFiltroData" name="habilitaFiltroData" onChange="checarFiltroData()">
+
+            <!-- Radio para Escolher se filtra por data -->
+            <div class="filtro-datas" id="opcoesFiltro">
+                <input type="radio" name="tipoFiltroData" id="dataEspecifica" value="dataEspecifica" onclick="checarFiltroData()">
+                <label for="dataEspecifica">Escolher uma data</label>
+                <input type="radio" name="tipoFiltroData" id="intervaloDatas" value="intervaloDatas" onclick="checarFiltroData()">
+                <label for="intervaloDatas">Intervalo de datas</label><br/>
+            </div>
+            
+            <!-- Data Especifica -->
+            <div class="filtro-datas" id="filtroDataEspecifica">
+                <form method="post">
+                    <label>Informe a data</label>
+                    <input type="date" format="YYYY-MM-DD" name="dataEspecifica" value="data" id="dataEspecifica">
+                    <input type="submit" name="formDataEspecifica" value="Aplicar filtro">
+                </form>
+            </div>
+
+            <!-- Interval de datas -->
+            <div class="filtro-datas" id="filtroIntervaloDatas">
+                <form method="post">
+                    <label>Data Inicial</label>
+                    <input type="date" format="YYYY-MM-DD" name="dataInicial" value="dataInicial" id="dataInicial">
+                    <label>Data Final</label>
+                    <input type="date" format="YYYY-MM-DD" name="dataFinal" value="dataFinal" id="dataFinal">
+                    <input type="submit" name="intervaloDatas" value="Aplicar filtro">
+                </form>
+            </div>
         </div>
         <div><img src='{{ graph1 }}'/></div>
 {% endblock %}
