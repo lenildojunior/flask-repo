@@ -5,7 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text, and_,cast
 from datetime import date
 #conversao dos parametos de uma string para a query
-from draw_graph import build_graph
+from draw_graph import build_graph,build_graph3
 #Usando geolocalizacao
 from geopy.geocoders import Nominatim
 geolocator = Nominatim(user_agent="flask_app")
@@ -74,6 +74,16 @@ class localizacao(db.Model):
     longitude = db.Column(db.String(4096))
     qtd_faixas = db.Column(db.Integer)
     data_realocacao = db.Column(db.DateTime)
+
+class historico_localizacao(db.Model):
+    __tablename__ = "historico_localizacao"
+    id = db.Column(db.Integer, primary_key=True)
+    latitude_anterior = db.Column(db.String(4096))
+    latitude_atual = db.Column(db.String(4096))
+    longitude_anterior = db.Column(db.String(4096))
+    longitude_atual = db.Column(db.String(4096))
+    data_modificacao = db.Column(db.DateTime)
+    id_dispositivo = db.Column(db.String(4096))
 
 
 #Funcao para verificar se o usuario esta logado antes de ir para esta pagina
@@ -267,30 +277,13 @@ def load_logged_in_user():
             "SELECT * FROM usuario WHERE id = :id_usuario"), id_usuario = user_id
         ).fetchone() 
 
-'''@app.route('/graphs') 
-@login_required 
-def graphs():
-    lista1 = contagem.query.filter_by(numero_faixa = 1,id_dispositivo = "353114091675712")
-    lista2 = contagem.query.filter_by(numero_faixa = 2,id_dispositivo = "353114091675712")
-    eixo_x_list = []
-    eixo_y_list1 = []
-    eixo_y_list2 = []
-    for registro in lista1:
-        horario = registro.data_hora.strftime("%H") + ":" + registro.data_hora.strftime("%M")
-        data = registro.data_hora.strftime("%d") + "/" + registro.data_hora.strftime("%m") + "/" + registro.data_hora.strftime("%Y") 
-        eixo_x_list.append(horario)
-        eixo_y_list1.append(registro.quantidade)
-    for registro in lista2:
-        eixo_y_list2.append(registro.quantidade)
-    graph_url = build_graph(eixo_x_list,eixo_y_list1,eixo_y_list2,data)
-    return render_template('graphs.html',graph1 = graph_url) '''
-
 @app.route('/graphs/<id_d>/<tipo_graf>',methods=('GET', 'POST'))
 #@app.route('/graphs/<id_d>/<tipo_graf>/<datas>') 
 @login_required 
 def graphs(id_d,tipo_graf):
-    #if request.method == 'GET':
     datas = None
+
+    #Se o botão de filtro de datas for utilizado
     if request.method == 'POST':
         if 'dataEspecifica' in request.form:
             datas = request.form['dataEspecifica']
@@ -300,7 +293,10 @@ def graphs(id_d,tipo_graf):
             dataFinal = request.form['dataFinal']
             datas = dataInicial + ' - ' + dataFinal
             contagem_por_data = text("SELECT * from contagem where numero_faixa= :num_faixa and id_dispositivo = :id_disp and cast(data_hora as date) BETWEEN :dtInicial and :dtFinal ORDER BY data_hora")
+
+    #Acessand oas informações de localização do dispositivo atual
     localizacao_disp = localizacao.query.filter_by(id_dispositivo = id_d).first()
+    
     #pegando o dicionario do endereco
     local_dict = (geolocator.reverse(localizacao_disp.latitude + "," + localizacao_disp.longitude)).raw['address']
     local = local_dict['road'] + ", " + local_dict['suburb'] + " - " + local_dict['city'] + "/" + local_dict['state']
@@ -315,7 +311,7 @@ def graphs(id_d,tipo_graf):
 
     #cada via possui no mínimo duas faixas
     if datas is None:
-        lista1 = contagem.query.filter_by(numero_faixa = 1,id_dispositivo = id_d)
+        lista1 = contagem.query.filter_by(numero_faixa = 1,id_dispositivo = id_d).order_by('data_hora')
         lista2 = contagem.query.filter_by(numero_faixa = 2,id_dispositivo = id_d)
     else:
         if 'dataEspecifica' in request.form:
@@ -324,13 +320,15 @@ def graphs(id_d,tipo_graf):
         else :
             lista1 = db.engine.execute(contagem_por_data, num_faixa = 1, id_disp = id_d,dtInicial = dataInicial,dtFinal = dataFinal )
             lista2 = db.engine.execute(contagem_por_data, num_faixa = 2, id_disp = id_d,dtInicial = dataInicial,dtFinal = dataFinal )
+
+    #Preparação dos dados para gerar o gráfico
     eixo_x_list = []
     eixo_y_list1 = []
     eixo_y_list2 = []
     for registro in lista1:
         horario = registro.data_hora.strftime("%H") + ":" + registro.data_hora.strftime("%M")
         data = registro.data_hora.strftime("%d") + "/" + registro.data_hora.strftime("%m") + "/" + registro.data_hora.strftime("%Y") 
-        eixo_x_list.append(data + ' - ' + horario)
+        eixo_x_list.append(horario + '\n' + data)
         eixo_y_list1.append(registro.quantidade)
     for registro in lista2:
         eixo_y_list2.append(registro.quantidade)
@@ -339,10 +337,16 @@ def graphs(id_d,tipo_graf):
     if(localizacao_disp.qtd_faixas == 3):
         if datas is None:
             lista3 = contagem.query.filter_by(numero_faixa = 3,id_dispositivo = id_d)
+        else:
+            if 'dataEspecifica' in request.form:
+                lista3 = db.engine.execute(contagem_por_data, num_faixa = 3, id_disp = id_d,data = datas)
+            else :
+                lista3 = db.engine.execute(contagem_por_data, num_faixa = 3, id_disp = id_d,dtInicial = dataInicial,dtFinal = dataFinal )
+           
         eixo_y_list3 = []
         for registro in lista3:
             eixo_y_list3.append(registro.quantidade)
-        graph_url = build_graph(eixo_x_list,eixo_y_list1,eixo_y_list2,eixo_y_list3,data,tipo_graf)
+        graph_url = build_graph3(eixo_x_list,eixo_y_list1,eixo_y_list2,eixo_y_list3,data,tipo_graf)
     else:
         graph_url = build_graph(eixo_x_list,eixo_y_list1,eixo_y_list2,data,tipo_graf)
         
