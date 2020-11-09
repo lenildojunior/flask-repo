@@ -1,6 +1,6 @@
 import functools 
 import folium
-from flask import Flask, render_template , redirect, request,url_for,flash,g,session 
+from flask import Flask, render_template , redirect, request,url_for,flash,g,session,jsonify 
 from flask_sqlalchemy import SQLAlchemy 
 from sqlalchemy import text, and_,cast
 from datetime import date
@@ -67,6 +67,17 @@ class dispositivos(db.Model):
     criado_por = db.Column(db.String(4096))
     ativo = db.Column(db.Integer)
 
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'marca_modelo': self.marca_modelo,
+            'data_cadastro':self.data_cadastro,
+            'criado_por':self.criado_por,
+            'ativo':self.ativo
+        }
+    
+
 class localizacao(db.Model):
     __tablename__ = "localizacao"
     id_dispositivo = db.Column(db.String(4096), primary_key=True)
@@ -94,6 +105,15 @@ def login_required(view):
             return redirect('login')
         return view(**kwargs)
     return wrapped_view 
+
+
+#Definição da API para comunicação interação com o dispositivo
+@app.route('/API/get_dispositivos',methods=["GET"])
+def get_dispositivos():
+    lista_dispositivos = dispositivos.query.filter_by(ativo=1)
+    return jsonify([i.serialize for i in lista_dispositivos]),200
+
+#Fim definição da API
 
 @app.route('/',methods=["GET","POST"]) 
 @login_required #Indica que para acessar esta pagina, precisa estar logado 
