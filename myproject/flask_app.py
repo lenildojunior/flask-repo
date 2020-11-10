@@ -113,6 +113,12 @@ def get_dispositivos():
     lista_dispositivos = dispositivos.query.filter_by(ativo=1)
     return jsonify([i.serialize for i in lista_dispositivos]),200
 
+
+@app.route('/API/get_dispositivos/<id_disp>',methods=["GET"])
+def get_dispositivos_id(id_disp):
+    lista_dispositivos = dispositivos.query.filter_by(id=id_disp)
+    return jsonify([i.serialize for i in lista_dispositivos]),200
+
 #Fim definição da API
 
 @app.route('/',methods=["GET","POST"]) 
