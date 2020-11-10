@@ -134,6 +134,30 @@ def get_localizacao_by_id(id_disp):
     valor_localizacao = localizacao.query.filter_by(id_dispositivo=id_disp)
     return jsonify([i.serialize for i in valor_localizacao]),200
 
+@app.route('/API/cadastrar_localizacao',methods=["POST"])
+def cadastrar_localizacao():
+    data = request.get_json()
+    if(data):
+        insert_query = text("INSERT INTO localizacao (id_dispositivo,latitude,longitude,qtd_faixas) VALUES (:id_disp, :lat, :long, :num_faixas)")
+        db.engine.execute(insert_query, id_disp = data.get('id_dispositivo'), lat = data.get('latitude') , long = data.get('longitude'), num_faixas = data.get('qtd_faixas'))
+
+    return jsonify(data),201
+
+@app.route('/API/atualizar_localizacao/<id_disp>',methods=['PUT'])
+def atualizar_localizacao(id_disp):
+    data = request.get_json()
+    if(data):
+        localizacao_update = localizacao.query.filter_by(id_dispositivo = id_disp).first()
+        if(localizacao_update is not None):
+            localizacao_update.latitude = data.get('latitude')
+            localizacao_update.longitude = data.get('longitude')
+            localizacao_update.data_realocacao = data.get('data_realocacao')
+            db.session.commit()
+            return jsonify(data),200
+        return jsonify({'error':'dispositivo não localizado'})
+    else:
+        return jsonify({'error':'JSON vazio'})
+
 #Fim definição da API
 
 @app.route('/',methods=["GET","POST"]) 
