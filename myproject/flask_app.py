@@ -86,6 +86,15 @@ class localizacao(db.Model):
     qtd_faixas = db.Column(db.Integer)
     data_realocacao = db.Column(db.DateTime)
 
+    @property
+    def serialize(self):
+        return {
+            'id_dispositivo': self.id_dispositivo,
+            'latitude': self.latitude,
+            'longitude':self.longitude,
+            'qtd_faixas':self.qtd_faixas
+        }
+
 class historico_localizacao(db.Model):
     __tablename__ = "historico_localizacao"
     id = db.Column(db.Integer, primary_key=True)
@@ -108,6 +117,7 @@ def login_required(view):
 
 
 #Definição da API para comunicação interação com o dispositivo
+
 @app.route('/API/get_dispositivos',methods=["GET"])
 def get_dispositivos():
     lista_dispositivos = dispositivos.query.filter_by(ativo=1)
@@ -115,9 +125,14 @@ def get_dispositivos():
 
 
 @app.route('/API/get_dispositivos/<id_disp>',methods=["GET"])
-def get_dispositivos_id(id_disp):
+def get_dispositivos_by_id(id_disp):
     lista_dispositivos = dispositivos.query.filter_by(id=id_disp)
     return jsonify([i.serialize for i in lista_dispositivos]),200
+
+@app.route('/API/get_localizacao/<id_disp>',methods=["GET"])
+def get_localizacao_by_id(id_disp):
+    valor_localizacao = localizacao.query.filter_by(id_dispositivo=id_disp)
+    return jsonify([i.serialize for i in valor_localizacao]),200
 
 #Fim definição da API
 
