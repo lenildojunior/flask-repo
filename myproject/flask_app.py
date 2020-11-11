@@ -41,6 +41,16 @@ class contagem(db.Model):
     data_hora = db.Column(db.DateTime)
     id_dispositivo = db.Column(db.String(4096))
 
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'quantidade': self.quantidade,
+            'numero_faixa': self.numero_faixa,
+            'data_hora': self.data_hora,
+            'id_dispositivo': self.id_dispositivo
+        }
+
 
 class usuario(db.Model):
     __tablename__ = "usuario"
@@ -134,14 +144,36 @@ def get_localizacao_by_id(id_disp):
     valor_localizacao = localizacao.query.filter_by(id_dispositivo=id_disp)
     return jsonify([i.serialize for i in valor_localizacao]),200
 
+@app.route('/API/registrar_contagem',methods=["POST"])
+def registrar_contagem():
+    data = request.get_json()
+    if(data):
+        dispositivo = dispositivos.query.filter_by(id=data[0].get('id_dispositivo'),ativo=1).first()
+        if(dispositivo is not None):
+            dados_localizacao = localizacao.query.filter_by(id_dispositivo=data[0].get('id_dispositivo')).first()
+            if(dados_localizacao is not None):
+                for informacao in data:
+                    insert_query = text("INSERT INTO contagem (numero_faixa,quantidade,data_hora,id_dispositivo) VALUES (:numero_da_faixa,:quantidade,NOW(),:id_disp)")
+                    db.engine.execute(insert_query,numero_da_faixa = informacao.get('numero_faixa'),quantidade=informacao.get('quantidade'), id_disp = informacao.get('id_dispositivo'))
+                return jsonify(data),201
+            return jsonify({'error':'Localizacao nao cadastrada'})
+        return jsonify({'error':'dispositivo nao cadastrado'})
+    return jsonify({'error':'Enviado um JSON vazio'})
+
 @app.route('/API/cadastrar_localizacao',methods=["POST"])
 def cadastrar_localizacao():
     data = request.get_json()
     if(data):
-        insert_query = text("INSERT INTO localizacao (id_dispositivo,latitude,longitude,qtd_faixas) VALUES (:id_disp, :lat, :long, :num_faixas)")
-        db.engine.execute(insert_query, id_disp = data.get('id_dispositivo'), lat = data.get('latitude') , long = data.get('longitude'), num_faixas = data.get('qtd_faixas'))
-
-    return jsonify(data),201
+        dispositivo = dispositivos.query.filter_by(id=data.get('id_dispositivo'),ativo=1).first()
+        if(dispositivo is not None):
+            dados_localizacao = localizacao.query.filter_by(id_dispositivo=data.get('id_dispositivo')).first()
+            if(dados_localizacao is None):
+                insert_query = text("INSERT INTO localizacao (id_dispositivo,latitude,longitude,qtd_faixas) VALUES (:id_disp, :lat, :long, :num_faixas)")
+                db.engine.execute(insert_query, id_disp = data.get('id_dispositivo'), lat = data.get('latitude') , long = data.get('longitude'), num_faixas = data.get('qtd_faixas'))
+                return jsonify(data),201
+            return jsonify({'mensagem':'Localizacao ja cadastrada'})
+        return jsonify({'error':'dispositivo nao cadastrado'})
+    return jsonify({'error':'Enviado um JSON vazio'})
 
 @app.route('/API/atualizar_localizacao/<id_disp>',methods=['PUT'])
 def atualizar_localizacao(id_disp):
